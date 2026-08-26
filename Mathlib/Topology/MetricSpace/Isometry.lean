@@ -35,6 +35,7 @@ open Function Set
 
 open scoped Topology ENNReal
 
+-- TODO: rename to Isometric, per Zulip
 /-- An isometry (also known as isometric embedding) is a map preserving the edistance
 between pseudoemetric spaces, or equivalently the distance between pseudometric space. -/
 def Isometry [PseudoEMetricSpace α] [PseudoEMetricSpace β] (f : α → β) : Prop :=
