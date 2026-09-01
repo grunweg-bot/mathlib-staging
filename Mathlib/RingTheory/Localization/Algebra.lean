@@ -163,11 +163,11 @@ open IsLocalization
 
 /-- The canonical linear map from the kernel of an algebra homomorphism to its localization. -/
 noncomputable def AlgHom.toKerIsLocalization (f : A →ₐ[R] B) :
-    RingHom.ker f →ₗ[A] RingHom.ker (mapₐ M Rₚ Aₚ Bₚ f) :=
+    RingHom.ker f.toRingHom →ₗ[A] RingHom.ker (mapₐ M Rₚ Aₚ Bₚ f).toRingHom :=
   RingHom.toKerIsLocalization Aₚ Bₚ f.toRingHom (algebraMapSubmonoid_le_comap M f)
 
 @[simp]
-lemma AlgHom.toKerIsLocalization_apply (f : A →ₐ[R] B) (x : RingHom.ker f) :
+lemma AlgHom.toKerIsLocalization_apply (f : A →ₐ[R] B) (x : RingHom.ker f.toRingHom) :
     AlgHom.toKerIsLocalization M Rₚ Aₚ Bₚ f x =
       RingHom.toKerIsLocalization Aₚ Bₚ f.toRingHom (algebraMapSubmonoid_le_comap M f) x :=
   rfl

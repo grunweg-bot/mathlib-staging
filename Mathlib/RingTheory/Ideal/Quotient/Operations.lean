@@ -501,7 +501,7 @@ lemma Quotient.smul_top {R : Type*} [CommRing R] (a : R) (I : Ideal R) :
     (a • ⊤ : Submodule R (R ⧸ I)) = Submodule.span R {Submodule.Quotient.mk a} := by
   simp [← Ideal.Quotient.span_singleton_one, Algebra.smul_def, Submodule.smul_span]
 
-theorem KerLift.map_smul (f : A →ₐ[R₁] B) (r : R₁) (x : A ⧸ (RingHom.ker f)) :
+theorem KerLift.map_smul (f : A →ₐ[R₁] B) (r : R₁) (x : A ⧸ (RingHom.ker f.toRingHom)) :
     f.kerLift (r • x) = r • f.kerLift x := by
   obtain ⟨a, rfl⟩ := Quotient.mkₐ_surjective R₁ _ x
   exact _root_.map_smul f _ _
@@ -511,17 +511,17 @@ theorem KerLift.map_smul (f : A →ₐ[R₁] B) (r : R₁) (x : A ⧸ (RingHom.k
 This is an isomorphism if `f` has a right inverse (`quotientKerAlgEquivOfRightInverse`) /
 is surjective (`quotientKerAlgEquivOfSurjective`).
 -/
-def kerLiftAlg (f : A →ₐ[R₁] B) : A ⧸ (RingHom.ker f) →ₐ[R₁] B :=
+def kerLiftAlg (f : A →ₐ[R₁] B) : A ⧸ (RingHom.ker (f : A →+* B)) →ₐ[R₁] B :=
   AlgHom.mk' (RingHom.kerLift (f : A →+* B)) fun _ _ => KerLift.map_smul f _ _
 
 @[simp]
 theorem kerLiftAlg_mk (f : A →ₐ[R₁] B) (a : A) :
-    kerLiftAlg f (Quotient.mk (RingHom.ker f) a) = f a := by
+    kerLiftAlg f (Quotient.mk (RingHom.ker (f : A →+* B)) a) = f a := by
   rfl
 
 @[simp]
 theorem kerLiftAlg_toRingHom (f : A →ₐ[R₁] B) :
-    (kerLiftAlg f : A ⧸ ker f →+* B) = RingHom.kerLift (f : A →+* B) :=
+    (kerLiftAlg f : A ⧸ ker (f : A →+* B) →+* B) = RingHom.kerLift (f : A →+* B) :=
   rfl
 
 /-- The induced algebra morphism from the quotient by the kernel is injective. -/
@@ -531,14 +531,14 @@ theorem kerLiftAlg_injective (f : A →ₐ[R₁] B) : Function.Injective (kerLif
 /-- The **first isomorphism** theorem for algebras, computable version. -/
 @[simps!]
 def quotientKerAlgEquivOfRightInverse {f : A →ₐ[R₁] B} {g : B → A}
-    (hf : Function.RightInverse g f) : (A ⧸ RingHom.ker f) ≃ₐ[R₁] B :=
+    (hf : Function.RightInverse g f) : (A ⧸ RingHom.ker (f : A →+* B)) ≃ₐ[R₁] B :=
   { RingHom.quotientKerEquivOfRightInverse hf,
     kerLiftAlg f with }
 
 /-- The **first isomorphism theorem** for algebras. -/
 @[simps! -isSimp apply]
 noncomputable def quotientKerAlgEquivOfSurjective {f : A →ₐ[R₁] B} (hf : Function.Surjective f) :
-    (A ⧸ (RingHom.ker f)) ≃ₐ[R₁] B :=
+    (A ⧸ (RingHom.ker (f : A →+* B))) ≃ₐ[R₁] B :=
   quotientKerAlgEquivOfRightInverse (Classical.choose_spec hf.hasRightInverse)
 
 @[simp]
@@ -550,24 +550,24 @@ lemma quotientKerAlgEquivOfSurjective_mk {f : A →ₐ[R₁] B} (hf : Function.S
 lemma quotientKerAlgEquivOfSurjective_symm_apply {f : A →ₐ[R₁] B} (hf : Function.Surjective f)
     (a : A) : (Ideal.quotientKerAlgEquivOfSurjective hf).symm (f a) = a := by
   apply (Ideal.quotientKerAlgEquivOfSurjective hf).injective
-  simp
+  rw [AlgEquiv.apply_symm_apply, quotientKerAlgEquivOfSurjective_mk]
 
 section liftOfSurjective
 
-variable {R A B C : Type*} [CommRing R] [CommRing A] [CommRing B] [CommRing C]
+variable {R A B C : Type*} [CommRing R] [Ring A] [Ring B] [Ring C]
     [Algebra R A] [Algebra R B] [Algebra R C]
 
 /-- `AlgHom` version of `RingHom.liftOfSurjective` that descends an algebra homomorphism
 along a surjection. -/
 noncomputable
 def _root_.AlgHom.liftOfSurjective (f : A →ₐ[R] B) (hf : Function.Surjective f)
-    (g : A →ₐ[R] C) (H : RingHom.ker f.toRingHom ≤ RingHom.ker g.toRingHom) : B →ₐ[R] C :=
+    (g : A →ₐ[R] C) (H : RingHom.ker (f : A →+* B) ≤ RingHom.ker (g : A →+* C)) : B →ₐ[R] C :=
   .comp (Ideal.Quotient.liftₐ _ g H) (Ideal.quotientKerAlgEquivOfSurjective hf).symm.toAlgHom
 
 set_option backward.isDefEq.respectTransparency false in
 @[simp]
 lemma _root_.AlgHom.liftOfSurjective_apply (f : A →ₐ[R] B) (hf : Function.Surjective f)
-    (g : A →ₐ[R] C) (H : RingHom.ker f.toRingHom ≤ RingHom.ker g.toRingHom) (x) :
+    (g : A →ₐ[R] C) (H : RingHom.ker (f : A →+* B) ≤ RingHom.ker (g : A →+* C)) (x) :
     AlgHom.liftOfSurjective f hf g H (f x) = g x := by
   dsimp [AlgHom.liftOfSurjective]
   erw [AlgEquiv.coe_toAlgHom] -- fixed after #21031
@@ -575,12 +575,12 @@ lemma _root_.AlgHom.liftOfSurjective_apply (f : A →ₐ[R] B) (hf : Function.Su
   rfl
 
 lemma _root_.AlgHom.liftOfSurjective_comp (f : A →ₐ[R] B) (hf : Function.Surjective f)
-    (g : A →ₐ[R] C) (H : RingHom.ker f.toRingHom ≤ RingHom.ker g.toRingHom) :
+    (g : A →ₐ[R] C) (H : RingHom.ker (f : A →+* B) ≤ RingHom.ker (g : A →+* C)) :
     (AlgHom.liftOfSurjective f hf g H).comp f = g := by
   ext; simp
 
 lemma _root_.AlgHom.liftOfSurjective_surjective (f : A →ₐ[R] B) (hf : Function.Surjective f)
-    (g : A →ₐ[R] C) (H : RingHom.ker f.toRingHom ≤ RingHom.ker g.toRingHom)
+    (g : A →ₐ[R] C) (H : RingHom.ker (f : A →+* B) ≤ RingHom.ker (g : A →+* C))
     (hg : Function.Surjective g) : Function.Surjective (AlgHom.liftOfSurjective f hf g H) :=
   .of_comp (g := f) (by convert! hg; ext; simp)
 
@@ -802,13 +802,14 @@ lemma isPrime_map_quotientMk_of_isPrime {I : Ideal R} [I.IsTwoSided] {p : Ideal 
     [p.IsPrime] (hIP : I ≤ p) : (p.map (Ideal.Quotient.mk I)).IsPrime := by
   apply Ideal.map_isPrime_of_surjective
   · exact Quotient.mk_surjective
-  · simpa
+  · change RingHom.ker (Quotient.mk I) ≤ p
+    rwa [mk_ker]
 
 /-- The **first isomorphism theorem** for commutative algebras (`AlgHom.range` version). -/
 noncomputable def quotientKerEquivRange
     {R A B : Type*} [CommSemiring R] [Ring A] [Algebra R A] [Semiring B] [Algebra R B]
     (f : A →ₐ[R] B) :
-    (A ⧸ RingHom.ker f) ≃ₐ[R] f.range :=
+    (A ⧸ RingHom.ker (f : A →+* B)) ≃ₐ[R] f.range :=
   (Ideal.quotientEquivAlgOfEq R (AlgHom.ker_rangeRestrict f).symm).trans <|
     Ideal.quotientKerAlgEquivOfSurjective f.rangeRestrict_surjective
 

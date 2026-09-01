@@ -122,7 +122,7 @@ then so is `B`. -/
 theorem of_surjective {f : A →ₐ[R] B} (hf : Function.Surjective f)
     (hker : (RingHom.ker f.toRingHom).FG)
     [FinitePresentation R A] : FinitePresentation R B :=
-  letI : FinitePresentation R (A ⧸ RingHom.ker f) := FinitePresentation.quotient hker
+  letI : FinitePresentation R (A ⧸ RingHom.ker (f : A →+* B)) := FinitePresentation.quotient hker
   equiv (Ideal.quotientKerAlgEquivOfSurjective hf)
 
 theorem iff :
@@ -234,13 +234,15 @@ theorem of_restrict_scalars_finitePresentation [Algebra A B] [IsScalarTower R A 
     rw [Finset.coe_union, Finset.coe_image, Finset.coe_image, Finset.attach_eq_univ,
       Finset.coe_univ, Set.image_univ]
     let s₀ := (MvPolynomial.map (algebraMap R A)) '' s ∪ Set.range g
-    let I := RingHom.ker (MvPolynomial.aeval (R := A) (f ∘ MvPolynomial.X))
+    let I := RingHom.ker (MvPolynomial.aeval (R := A) (f ∘ MvPolynomial.X) :
+      MvPolynomial (Fin n) A →+* B)
     change Ideal.span s₀ = I
     have leI : Ideal.span ((MvPolynomial.map (algebraMap R A)) '' s ∪ Set.range g) ≤
-      RingHom.ker (MvPolynomial.aeval (R := A) (f ∘ MvPolynomial.X)) := by
+      RingHom.ker (MvPolynomial.aeval (R := A) (f ∘ MvPolynomial.X) :
+        MvPolynomial (Fin n) A →+* B) := by
       rw [Ideal.span_le]
       rintro _ (⟨x, hx, rfl⟩ | ⟨⟨x, hx⟩, rfl⟩) <;>
-      rw [SetLike.mem_coe, RingHom.mem_ker]
+      rw [SetLike.mem_coe, RingHom.mem_ker, AlgHom.coe_toRingHom]
       · rw [MvPolynomial.aeval_map_algebraMap (R := R) (A := A), ← aeval_unique]
         have := Ideal.subset_span hx
         rwa [hs] at this
@@ -279,8 +281,8 @@ theorem of_restrict_scalars_finitePresentation [Algebra A B] [IsScalarTower R A 
         · exact Set.mem_range_self _
         · refine add_mem (Ideal.mul_mem_left _ _ hq₂) (Ideal.mul_mem_right _ _ hq₁)
     obtain ⟨_, ⟨p, rfl⟩, q, hq, rfl⟩ := AddSubmonoid.mem_sup.mp this
-    rw [map_add, aeval_map_algebraMap, ← aeval_unique, show MvPolynomial.aeval (f ∘ X) q = 0
-      from leI hq, add_zero] at hx
+    rw [AlgHom.coe_toRingHom, map_add, aeval_map_algebraMap, ← aeval_unique,
+      show MvPolynomial.aeval (f ∘ X) q = 0 from leI hq, add_zero] at hx
     suffices Ideal.span (s : Set RX) ≤ (Ideal.span s₀).comap (MvPolynomial.map <| algebraMap R A) by
       refine add_mem ?_ hq
       rw [hs] at this

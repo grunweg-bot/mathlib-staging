@@ -27,7 +27,7 @@ variable (R M : Type*)
   [CommSemiring R] [AddCommMonoid M] [Module R M] [Module Rᵐᵒᵖ M] [IsCentralScalar R M]
 
 /-- The kernel of the `AlgHom` `fstHom R R M` -/
-def kerIdeal : Ideal (TrivSqZeroExt R M) := RingHom.ker (fstHom R R M)
+def kerIdeal : Ideal (TrivSqZeroExt R M) := RingHom.ker (fstHom R R M).toRingHom
 
 set_option backward.isDefEq.respectTransparency false in
 theorem mem_kerIdeal_iff_inr (x : TrivSqZeroExt R M) : x ∈ kerIdeal R M ↔ x = inr x.snd := by

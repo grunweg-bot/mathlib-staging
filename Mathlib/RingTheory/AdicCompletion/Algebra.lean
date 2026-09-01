@@ -474,9 +474,9 @@ variable {A : Type*} [CommRing A] [Algebra R A] [Algebra R S]
 /-- The canonical projection from the `I`-adic completion of `S` to `S ⧸ I`. Defined
 in terms of a surjective map `S →ₐ[R] A`. -/
 noncomputable def kerProj {f : S →ₐ[R] A} (hf : Function.Surjective f) :
-    AdicCompletion (RingHom.ker f) S →ₐ[R] A :=
+    AdicCompletion (RingHom.ker (f : S →+* A)) S →ₐ[R] A :=
   (Ideal.quotientKerAlgEquivOfSurjective hf).toAlgHom.comp <|
-    (AdicCompletion.evalOneₐ <| RingHom.ker f).restrictScalars R
+    (AdicCompletion.evalOneₐ <| RingHom.ker (f : S →+* A)).restrictScalars R
 
 @[simp]
 lemma kerProj_of {f : S →ₐ[R] A} (hf : Function.Surjective f) (x : S) :

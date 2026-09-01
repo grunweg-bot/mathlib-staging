@@ -185,11 +185,13 @@ variable [CommRing 𝕜] [NoZeroDivisors 𝕜] [TopologicalSpace 𝕜] [Continuo
 theorem apply_mem_spectrum [Nontrivial 𝕜] (φ : characterSpace 𝕜 A) (a : A) : φ a ∈ spectrum 𝕜 a :=
   AlgHom.apply_mem_spectrum φ a
 
-theorem ext_ker {φ ψ : characterSpace 𝕜 A} (h : RingHom.ker φ = RingHom.ker ψ) : φ = ψ := by
+theorem ext_ker {φ ψ : characterSpace 𝕜 A}
+    (h : RingHom.ker (toAlgHom φ).toRingHom = RingHom.ker (toAlgHom ψ).toRingHom) : φ = ψ := by
   ext x
-  have : x - algebraMap 𝕜 A (ψ x) ∈ RingHom.ker φ := by
-    simpa only [h, RingHom.mem_ker, map_sub, AlgHomClass.commutes] using! sub_self (ψ x)
-  rwa [RingHom.mem_ker, map_sub, AlgHomClass.commutes, sub_eq_zero] at this
+  have : x - algebraMap 𝕜 A (ψ x) ∈ RingHom.ker (toAlgHom φ).toRingHom := by
+    simpa only [h, RingHom.mem_ker, toAlgHom_apply, map_sub, AlgHomClass.commutes]
+      using! sub_self (ψ x)
+  rwa [RingHom.mem_ker, toAlgHom_apply, map_sub, AlgHomClass.commutes, sub_eq_zero] at this
 
 end Ring
 
@@ -201,8 +203,10 @@ variable [Field 𝕜] [TopologicalSpace 𝕜] [ContinuousAdd 𝕜] [ContinuousCo
 variable [Ring A] [TopologicalSpace A] [Algebra 𝕜 A]
 
 /-- The `RingHom.ker` of `φ : characterSpace 𝕜 A` is maximal. -/
-instance ker_isMaximal (φ : characterSpace 𝕜 A) : (RingHom.ker φ).IsMaximal :=
-  RingHom.ker_isMaximal_of_surjective φ fun z ↦ ⟨algebraMap 𝕜 A z, by simp [AlgHomClass.commutes]⟩
+instance ker_isMaximal (φ : characterSpace 𝕜 A) :
+    (RingHom.ker (CharacterSpace.toAlgHom φ).toRingHom).IsMaximal :=
+  RingHom.ker_isMaximal_of_surjective (CharacterSpace.toAlgHom φ).toRingHom
+    fun z ↦ ⟨algebraMap 𝕜 A z, by simp [AlgHomClass.commutes]⟩
 
 end Kernel
 

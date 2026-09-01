@@ -72,9 +72,11 @@ theorem eq_zero_of_eval_zero_at_prod_finset {σ : Type*} [Finite σ] [IsDomain R
   induction σ using Finite.induction_empty_option with
   | @of_equiv σ τ e h =>
     suffices MvPolynomial.rename e.symm P = 0 by
-      have that := MvPolynomial.rename_injective (R := R) e.symm (e.symm.injective)
+      have that : Function.Injective (MvPolynomial.rename e.symm).toRingHom :=
+        MvPolynomial.rename_injective (R := R) e.symm (e.symm.injective)
       rw [RingHom.injective_iff_ker_eq_bot] at that
-      rwa [← RingHom.mem_ker, that] at this
+      have this' : (MvPolynomial.rename e.symm).toRingHom P = 0 := this
+      rwa [← RingHom.mem_ker, that] at this'
     apply h _ (fun i ↦ S (e i))
     · intro i
       convert! Hdeg (e i)

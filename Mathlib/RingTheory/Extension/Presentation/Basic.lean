@@ -70,7 +70,8 @@ variable (P : Presentation R S ι σ)
 
 @[simp]
 lemma aeval_val_relation (i) : aeval P.val (P.relation i) = 0 := by
-  rw [← RingHom.mem_ker, ← P.ker_eq_ker_aeval_val, ← P.span_range_relation_eq_ker]
+  rw [← AlgHom.coe_toRingHom, ← RingHom.mem_ker, ← P.ker_eq_ker_aeval_val,
+    ← P.span_range_relation_eq_ker]
   exact Ideal.subset_span ⟨i, rfl⟩
 
 lemma relation_mem_ker (i) : P.relation i ∈ P.ker := by
@@ -127,11 +128,11 @@ lemma exists_presentation_fin [FinitePresentation R S] :
   letI n : ℕ := H.choose
   letI f : MvPolynomial (Fin n) R →ₐ[R] S := H.choose_spec.choose
   haveI hf : Function.Surjective f := H.choose_spec.choose_spec.1
-  haveI hf' : (RingHom.ker f).FG := H.choose_spec.choose_spec.2
+  haveI hf' : (RingHom.ker f.toRingHom).FG := H.choose_spec.choose_spec.2
   letI H' := Submodule.fg_iff_exists_fin_generating_family.mp hf'
   let m : ℕ := H'.choose
   let v : Fin m → MvPolynomial (Fin n) R := H'.choose_spec.choose
-  have hv : Ideal.span (Set.range v) = RingHom.ker f := H'.choose_spec.choose_spec
+  have hv : Ideal.span (Set.range v) = RingHom.ker f.toRingHom := H'.choose_spec.choose_spec
   ⟨n, m,
     ⟨{__ := Generators.ofSurjective (fun x ↦ f (.X x)) (by convert! hf; ext; simp)
       relation := v
@@ -213,8 +214,7 @@ lemma _root_.Algebra.Generators.ker_localizationAway :
     simp only [aeval_X, Generators.localizationAway_val, AlgHom.coe_comp,
       AlgEquiv.coe_toAlgHom, Ideal.Quotient.mkₐ_eq_mk, Function.comp_apply]
     rw [IsLocalization.Away.mvPolynomialQuotientEquiv_apply, aeval_X]
-  rw [Generators.ker_eq_ker_aeval_val, this, ← RingHom.ker_coe_toRingHom, AlgHom.comp_toRingHom,
-    ← RingHom.comap_ker]
+  rw [Generators.ker_eq_ker_aeval_val, this, AlgHom.comp_toRingHom, ← RingHom.comap_ker]
   simp only [AlgEquiv.toAlgHom_toRingHom]
   change Ideal.comap _ (RingHom.ker (mvPolynomialQuotientEquiv S r)) = Ideal.span {C r * X () - 1}
   simp [RingHom.ker_equiv, ← RingHom.ker_eq_comap_bot]
@@ -246,14 +246,15 @@ variable (T) [CommRing T] [Algebra R T] (P : Presentation R S ι σ)
 
 lemma span_range_relation_eq_ker_baseChange :
     Ideal.span (Set.range fun i ↦ (MvPolynomial.map (algebraMap R T)) (P.relation i)) =
-      RingHom.ker (aeval (S₁ := T ⊗[R] S) (P.baseChange T).val) := by
+      RingHom.ker (aeval (R := T) (S₁ := T ⊗[R] S) (P.baseChange T).val :
+        MvPolynomial ι T →+* T ⊗[R] S) := by
   apply le_antisymm
   · rw [Ideal.span_le]
     intro x ⟨y, hy⟩
     have Z := aeval_val_relation P y
     apply_fun TensorProduct.includeRight (R := R) (A := T) at Z
     rw [map_zero] at Z
-    simp only [SetLike.mem_coe, RingHom.mem_ker, ← Z, ← hy,
+    simp only [SetLike.mem_coe, RingHom.mem_ker, AlgHom.coe_toRingHom, ← Z, ← hy,
       TensorProduct.includeRight_apply]
     rw [aeval_map_algebraMap T (P.baseChange T).val (P.relation y)]
     change _ = TensorProduct.includeRight.toRingHom _
@@ -266,7 +267,7 @@ lemma span_range_relation_eq_ker_baseChange :
       P.algebraMap_surjective
     let e := MvPolynomial.algebraTensorAlgEquiv (R := R) (σ := ι) (A := T)
     have H' : e.symm x ∈ RingHom.ker (TensorProduct.map (AlgHom.id R T)
-        (IsScalarTower.toAlgHom R P.Ring S)) := by
+        (IsScalarTower.toAlgHom R P.Ring S) : T ⊗[R] P.Ring →+* T ⊗[R] S) := by
       rw [RingHom.mem_ker, ← hx]
       clear hx
       induction x using MvPolynomial.induction_on with
@@ -403,7 +404,8 @@ private lemma aux_eq_comp : Q.aux P =
   cases i <;> simp
 
 private lemma aux_ker :
-    RingHom.ker (Q.aux P) = Ideal.map (rename Sum.inr) (RingHom.ker (aeval P.val)) := by
+    RingHom.ker (Q.aux P : MvPolynomial (ι' ⊕ ι) R →+* MvPolynomial ι' S) =
+      Ideal.map (rename Sum.inr) (RingHom.ker (aeval (R := R) P.val : P.Ring →+* S)) := by
   rw [aux_eq_comp, ← AlgHom.comap_ker, MvPolynomial.ker_mapAlgHom]
   change Ideal.comap _ (Ideal.map (IsScalarTower.toAlgHom R (MvPolynomial ι R) _) _) = _
   rw [← sumAlgEquiv_comp_rename_inr, ← Ideal.map_mapₐ, Ideal.comap_map_of_bijective]
@@ -422,7 +424,7 @@ lemma span_range_relation_eq_ker_comp : Ideal.span
     (Set.range (Sum.elim (Algebra.Presentation.compRelationAux Q P)
       fun rp ↦ (rename Sum.inr) (P.relation rp))) = (Q.comp P.toGenerators).ker := by
   rw [Generators.ker_eq_ker_aeval_val, Q.aeval_comp_val_eq, ← AlgHom.comap_ker]
-  change _ = Ideal.comap _ (RingHom.ker (aeval Q.val))
+  change _ = Ideal.comap _ (RingHom.ker (aeval (R := S) Q.val : Q.Ring →+* T))
   rw [← Q.ker_eq_ker_aeval_val, ← Q.span_range_relation_eq_ker, ← Q.aux_image_relation P,
     ← Ideal.map_span, Ideal.comap_map_of_surjective' _ (Q.aux_surjective P)]
   rw [Set.Sum.elim_range, Ideal.span_union, Q.aux_ker, ← P.ker_eq_ker_aeval_val,
